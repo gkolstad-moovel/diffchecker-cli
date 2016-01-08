@@ -1,20 +1,27 @@
+#!/usr/bin/env node
+
 import request from 'superagent';
 import fs from 'fs';
 import opener from 'opener';
 import prompt from 'prompt';
 import git from 'git-fs';
-import path from 'path';
 import GoogleAnalytics from 'ga';
 import minimist from 'minimist';
+import path from 'path';
 
 const API_URI = 'https://diffchecker-api-production.herokuapp.com';
 const ga = new GoogleAnalytics('UA-8857839-4', 'http://www.diffchecker.com');
 const options = minimist(process.argv.slice(2));
 
+function getConfigPath () {
+  const userHomePath = process.env[(process.platform === 'win32') ? 'USERPROFILE' : 'HOME'];
+  return path.join(userHomePath, '/diffchecker.json');
+}
+
 function authorization () {
   return new Promise((resolve, reject) => {
     try {
-      const config = require(path.join(__dirname, './diffchecker.json'));
+      const config = require(getConfigPath());
       resolve(config);
     } catch (err) {
       console.log("You don't appear to be logged in. Sign up for a free account at https://www.diffchecker.com/signup and enter your credentials.");
@@ -42,16 +49,14 @@ function authorization () {
               action: 'login',
               label: 'client',
               value: 'cli'
-            }, function loginError(e) {
-              console.log('login error', e);
             });
 
-            const config = { authToken: response.body.authToken };
+            const conf = { authToken: response.body.authToken };
 
-            fs.writeFile('./diffchecker.json', JSON.stringify(config, null, 2), (e) => {
+            fs.writeFile(getConfigPath(), JSON.stringify(conf, null, 2), (e) => {
               if (e) reject(e);
 
-              resolve(config);
+              resolve(conf);
             });
           });
       });
@@ -81,11 +86,11 @@ function gitDiff (source) {
 }
 
 authorization()
-.then(config => {
+.then(conf => {
   function transmit ({ left, right }) {
     request
       .post(API_URI + '/diffs')
-      .set('Authorization', 'Bearer ' + config.authToken)
+      .set('Authorization', 'Bearer ' + conf.authToken)
       .send({
         left,
         right,
@@ -115,7 +120,7 @@ authorization()
   /* Check if there's just one argument. If there is, assume user wants to compare with most recent git commit. Otherwise, read the next argument as a file to compare with. */
 
   if (options.signout) {
-    fs.unlink('./diffchecker.json', () => {
+    fs.unlink(getConfigPath(), () => {
       console.log("You've been signed out. Run the command again to sign in.");
       process.exit();
     });
@@ -130,7 +135,7 @@ authorization()
   } else {
     transmit({
       left: fs.readFileSync(options._[0], 'utf-8'),
-      right: fs.readFileSync(options._[1], 'utf-8')
+      right: fs.readFileSync(options._[0], 'utf-8')
     });
   }
 });

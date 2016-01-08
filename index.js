@@ -1,2 +1,2 @@
 require('babel-core/register');
-require('./diffchecker');
+require('./src/diffchecker');
