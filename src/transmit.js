@@ -26,12 +26,8 @@ export default function transmit ({ left, right }) {
       ga.trackEvent({
         category: 'diff',
         action: 'submit',
-        label: 'client'
-      }, function diffCreateError(e) {
-        if (e) {
-          console.log('diff create error', e);
-          process.exit();
-        }
+        label: 'cli'
+      }, function diffCreateError () {
         console.log('Your diff is ready: ' + url);
         opener(url);
       });

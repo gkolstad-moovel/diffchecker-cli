@@ -32,19 +32,19 @@ export default function authorization () {
           .send(result)
           .end((er, response) => {
             if (er) return reject(new Error(response.body.error.code));
-            ga.trackEvent({
-              category: 'user',
-              action: 'login',
-              label: 'client',
-              value: 'cli'
-            });
 
             const conf = { authToken: response.body.authToken };
 
             fs.writeFile(configPath, JSON.stringify(conf, null, 2), (e) => {
               if (e) reject(e);
 
-              resolve(conf);
+              ga.trackEvent({
+                category: 'user',
+                action: 'login',
+                label: 'cli'
+              }, function authenticated () {
+                resolve(conf);
+              });
             });
           });
       });
