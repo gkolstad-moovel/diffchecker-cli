@@ -6,24 +6,19 @@ import opener from 'opener';
 import prompt from 'prompt';
 import git from 'git-fs';
 import GoogleAnalytics from 'ga';
-import minimist from 'minimist';
+import { argv } from 'yargs';
 import path from 'path';
+import spawn from 'child_process';
 
-const API_URI = 'https://diffchecker-api-production.herokuapp.com';
-const ga = new GoogleAnalytics('UA-8857839-4', 'http://www.diffchecker.com');
-const options = minimist(process.argv.slice(2));
-
-function getConfigPath () {
-  const userHomePath = process.env[(process.platform === 'win32') ? 'USERPROFILE' : 'HOME'];
-  return path.join(userHomePath, '/diffchecker.json');
-}
+const ga = new GoogleAnalytics(process.env.GA_ID, process.env.GA_DOMAIN);
+const configPath = path.join(process.env[(process.platform === 'win32') ? 'USERPROFILE' : 'HOME'], '/.diffchecker.json');
+const config = fs.existsSync(configPath) ? JSON.parse(fs.readFileSync(configPath)) : false;
 
 function authorization () {
   return new Promise((resolve, reject) => {
-    try {
-      const config = require(getConfigPath());
+    if (config) {
       resolve(config);
-    } catch (err) {
+    } else {
       console.log("You don't appear to be logged in. Sign up for a free account at https://www.diffchecker.com/signup and enter your credentials.");
       prompt.start();
       prompt.get({
@@ -40,7 +35,7 @@ function authorization () {
         }
       }, (error, result) => {
         request
-          .post(API_URI + '/sessions')
+          .post(process.env.API_URL + '/sessions')
           .send(result)
           .end((er, response) => {
             if (er) reject(er);
@@ -53,7 +48,7 @@ function authorization () {
 
             const conf = { authToken: response.body.authToken };
 
-            fs.writeFile(getConfigPath(), JSON.stringify(conf, null, 2), (e) => {
+            fs.writeFile(configPath, JSON.stringify(conf, null, 2), (e) => {
               if (e) reject(e);
 
               resolve(conf);
@@ -66,17 +61,18 @@ function authorization () {
 
 function gitDiff (source) {
   return new Promise((resolve, reject) => {
-    require('child_process').exec('git rev-parse --show-toplevel', (error, dir) => {
+    spawn.exec('git rev-parse --show-toplevel', (error, dir) => {
       if (error) reject(Error("Tried to look for a git version of that file, but couldn't locate a git repository nearby."));
 
       const gitDir = dir.trim('\n');
 
-      git(gitDir);
+      /* Uses git-fs to look in the git repo as if it were a file system (like fs). */
+      git(gitDir); // initialize git-fs in the folder gitDir.
       git.getHead((err, hash) => {
-        if (err) reject(Error("Couldn't get the hash of the most recent commit."));
+        if (err) reject(new Error("Couldn't get the hash of the most recent commit."));
 
         git.readFile(hash, source, 'utf8', (e, data) => {
-          if (e) reject(Error("Couldn't read the file from the git repository. Are you sure it exists in the latest commit?"));
+          if (e) reject(new Error("Couldn't read the file from the git repository. Are you sure it exists in the latest commit?"));
 
           resolve(data);
         });
@@ -89,13 +85,13 @@ authorization()
 .then(conf => {
   function transmit ({ left, right }) {
     request
-      .post(API_URI + '/diffs')
+      .post(process.env.API_URL + '/diffs')
       .set('Authorization', 'Bearer ' + conf.authToken)
       .send({
         left,
         right,
-        expiry: options.expire || 'hour',
-        title: options.title || null
+        expiry: argv.expire || 'hour',
+        title: argv.title || null
       })
       .end((error, response) => {
         if (error) {
@@ -110,7 +106,10 @@ authorization()
           action: 'submit',
           label: 'client'
         }, function diffCreateError(e) {
-          if (e) console.log('diff create error', e);
+          if (e) {
+            console.log('diff create error', e);
+            process.exit();
+          }
           console.log('Your diff is ready: ' + url);
           opener(url);
         });
@@ -119,23 +118,23 @@ authorization()
 
   /* Check if there's just one argument. If there is, assume user wants to compare with most recent git commit. Otherwise, read the next argument as a file to compare with. */
 
-  if (options.signout) {
-    fs.unlink(getConfigPath(), () => {
+  if (argv.signout) {
+    fs.unlink(configPath, () => {
       console.log("You've been signed out. Run the command again to sign in.");
       process.exit();
     });
-  } else if (options._.length === 1) {
-    gitDiff(options._[0])
+  } else if (argv._.length === 1) {
+    gitDiff(argv._[0])
     .then(left => {
       transmit({
         left,
-        'right': fs.readFileSync(options._[0], 'utf-8')
+        'right': fs.readFileSync(argv._[0], 'utf-8')
       });
     });
   } else {
     transmit({
-      left: fs.readFileSync(options._[0], 'utf-8'),
-      right: fs.readFileSync(options._[0], 'utf-8')
+      left: fs.readFileSync(argv._[0], 'utf-8'),
+      right: fs.readFileSync(argv._[0], 'utf-8')
     });
   }
 });
