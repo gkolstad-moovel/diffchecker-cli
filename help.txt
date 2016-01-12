@@ -1,0 +1,7 @@
+  Usage: diffchecker file1 [file2]
+
+  Options:
+
+  --help -h     Shows this help file in the terminal.
+  --version -v  Shows the version.
+  --signout     Sign out of the current account. Will be asked to sign in next time you use the app.
