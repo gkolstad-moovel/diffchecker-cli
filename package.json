@@ -16,7 +16,7 @@
     "url": "https://github.com/wali-s/diffchecker-cli"
   },
   "scripts": {
-    "compile": "API_URL=https://diffchecker-api-production.herokuapp.com GA_ID=UA-8857839-4 GA_DOMAIN=http://www.diffchecker.com babel --plugins transform-inline-environment-variables src/diffchecker.js --out-file dist/diffchecker.js",
+    "compile": "mkdir -p dist && API_URL=https://diffchecker-api-production.herokuapp.com GA_ID=UA-8857839-4 GA_DOMAIN=http://www.diffchecker.com babel --plugins transform-inline-environment-variables src/diffchecker.js --out-file dist/diffchecker.js",
     "prepublish": "npm run compile",
     "test": "npm run compile && node dist/diffchecker.js test/file1.js test/file2.js"
   },
