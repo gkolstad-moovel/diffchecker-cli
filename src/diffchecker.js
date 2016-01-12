@@ -21,6 +21,8 @@ function authorization () {
     } else {
       console.log("You don't appear to be logged in. Sign up for a free account at https://www.diffchecker.com/signup and enter your credentials.");
       prompt.start();
+      prompt.message = '>';
+      prompt.delimiter = ' ';
       prompt.get({
         properties: {
           email: {
