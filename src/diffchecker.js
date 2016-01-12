@@ -16,7 +16,7 @@ const config = fs.existsSync(configPath) ? JSON.parse(fs.readFileSync(configPath
 
 function authorization () {
   return new Promise((resolve, reject) => {
-    if (config) {
+    if (config.authToken) {
       resolve(config);
     } else {
       console.log("You don't appear to be logged in. Sign up for a free account at https://www.diffchecker.com/signup and enter your credentials.");
@@ -38,7 +38,7 @@ function authorization () {
           .post(process.env.API_URL + '/sessions')
           .send(result)
           .end((er, response) => {
-            if (er) reject(er);
+            if (er) return reject(new Error(response.body.error.code));
             ga.trackEvent({
               category: 'user',
               action: 'login',
@@ -62,7 +62,7 @@ function authorization () {
 function gitDiff (source) {
   return new Promise((resolve, reject) => {
     spawn.exec('git rev-parse --show-toplevel', (error, dir) => {
-      if (error) reject(Error("Tried to look for a git version of that file, but couldn't locate a git repository nearby."));
+      if (error) reject(new Error("Tried to look for a git version of that file, but couldn't locate a git repository nearby."));
 
       const gitDir = dir.trim('\n');
 
@@ -137,4 +137,7 @@ authorization()
       right: fs.readFileSync(argv._[0], 'utf-8')
     });
   }
+})
+.catch(error => {
+  console.error(error);
 });
