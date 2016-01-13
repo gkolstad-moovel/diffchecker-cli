@@ -12,7 +12,7 @@ export default function transmit ({ left, right }) {
     .send({
       left,
       right,
-      expiry: argv.expire || 'hour',
+      expiry: argv.expires || argv.e || 'forever',
       title: argv.title || null
     })
     .end((error, response) => {

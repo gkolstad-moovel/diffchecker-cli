@@ -25,6 +25,7 @@ if (argv.h || argv.help) {
         case 'v':
         case 'version':
         case 'expires':
+        case 'e':
         case 'signout':
         case 'h':
         case 'help':

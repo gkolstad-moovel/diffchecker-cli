@@ -4,5 +4,5 @@
 
   --help -h     Shows this help file in the terminal.
   --version -v  Shows the version.
-  --expires     Set how long the diff stays available. Either 1h, 1d or forever. Default: 1h.
+  --expires -e     Set how long the diff stays available. Either hour, day, month or forever. Default: forever.
   --signout     Sign out of the current account. Will be asked to sign in next time you use the app.
