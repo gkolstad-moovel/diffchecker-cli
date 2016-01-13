@@ -1,145 +1,73 @@
 #!/usr/bin/env node
 
-import request from 'superagent';
 import fs from 'fs';
-import opener from 'opener';
-import prompt from 'prompt';
-import git from 'git-fs';
-import GoogleAnalytics from 'ga';
 import { argv } from 'yargs';
 import path from 'path';
-import spawn from 'child_process';
 
-const ga = new GoogleAnalytics(process.env.GA_ID, process.env.GA_DOMAIN);
-const configPath = path.join(process.env[(process.platform === 'win32') ? 'USERPROFILE' : 'HOME'], '/.diffchecker.json');
-const config = fs.existsSync(configPath) ? JSON.parse(fs.readFileSync(configPath)) : false;
+import authorization from './auth';
+import gitDiff from './gitdiff';
+import transmit from './transmit';
+import { configPath } from './config';
 
-function authorization () {
-  return new Promise((resolve, reject) => {
-    if (config.authToken) {
-      resolve(config);
-    } else {
-      console.log("You don't appear to be logged in. Sign up for a free account at https://www.diffchecker.com/signup and enter your credentials.");
-      prompt.start();
-      prompt.message = '>';
-      prompt.delimiter = ' ';
-      prompt.get({
-        properties: {
-          email: {
-            required: true,
-            message: 'Email'
-          },
-          password: {
-            required: true,
-            message: 'Password',
-            hidden: true
-          }
-        }
-      }, (error, result) => {
-        request
-          .post(process.env.API_URL + '/sessions')
-          .send(result)
-          .end((er, response) => {
-            if (er) return reject(new Error(response.body.error.code));
-            ga.trackEvent({
-              category: 'user',
-              action: 'login',
-              label: 'client',
-              value: 'cli'
-            });
+if (argv.h || argv.help) {
+  const help = fs.readFileSync(path.resolve(__dirname, '../help.txt'), 'utf-8');
 
-            const conf = { authToken: response.body.authToken };
+  console.log(help);
+} else if (argv.v || argv.version) {
+  const npmPackage = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../package.json'), 'utf-8'));
 
-            fs.writeFile(configPath, JSON.stringify(conf, null, 2), (e) => {
-              if (e) reject(e);
-
-              resolve(conf);
-            });
-          });
-      });
+  console.log(npmPackage.version);
+} else {
+  for (const arg in argv) {
+    if (arg) {
+      switch (arg) {
+        case '$0':
+        case 'v':
+        case 'version':
+        case 'expires':
+        case 'signout':
+        case 'h':
+        case 'help':
+        case '_':
+          break;
+        default:
+          console.error("The option: '" + arg + "' is not accepted. Please see help by running diffchecker --help.");
+          process.exit();
+      }
     }
-  });
-}
+  }
 
-function gitDiff (source) {
-  return new Promise((resolve, reject) => {
-    spawn.exec('git rev-parse --show-toplevel', (error, dir) => {
-      if (error) reject(new Error("Tried to look for a git version of that file, but couldn't locate a git repository nearby."));
-
-      const gitDir = dir.trim('\n');
-
-      /* Uses git-fs to look in the git repo as if it were a file system (like fs). */
-      git(gitDir); // initialize git-fs in the folder gitDir.
-      git.getHead((err, hash) => {
-        if (err) reject(new Error("Couldn't get the hash of the most recent commit."));
-
-        git.readFile(hash, source, 'utf8', (e, data) => {
-          if (e) reject(new Error("Couldn't read the file from the git repository. Are you sure it exists in the latest commit?"));
-
-          resolve(data);
-        });
+  authorization()
+  .then(() => {
+    /* Check if there's just one argument. If there is, assume user wants to compare with most recent git commit. Otherwise, read the next argument as a file to compare with. */
+    if (argv.signout) {
+      fs.unlink(configPath, () => {
+        console.log("You've been signed out. Run the command again to sign in.");
+        process.exit();
       });
-    });
-  });
-}
-
-authorization()
-.then(conf => {
-  function transmit ({ left, right }) {
-    request
-      .post(process.env.API_URL + '/diffs')
-      .set('Authorization', 'Bearer ' + conf.authToken)
-      .send({
-        left,
-        right,
-        expiry: argv.expire || 'hour',
-        title: argv.title || null
+    } else if (argv._.length === 1 && fs.existsSync(argv._[0])) {
+      gitDiff(argv._[0])
+      .then(left => {
+        transmit({
+          left,
+          'right': fs.readFileSync(argv._[0], 'utf-8')
+        });
       })
-      .end((error, response) => {
-        if (error) {
-          console.log(error);
-          process.exit(1);
-        }
-
-        const url = 'https://diffchecker.com/' + response.body.slug;
-
-        ga.trackEvent({
-          category: 'diff',
-          action: 'submit',
-          label: 'client'
-        }, function diffCreateError(e) {
-          if (e) {
-            console.log('diff create error', e);
-            process.exit();
-          }
-          console.log('Your diff is ready: ' + url);
-          opener(url);
-        });
+      .catch(error => {
+        console.log(error);
       });
-  }
-
-  /* Check if there's just one argument. If there is, assume user wants to compare with most recent git commit. Otherwise, read the next argument as a file to compare with. */
-
-  if (argv.signout) {
-    fs.unlink(configPath, () => {
-      console.log("You've been signed out. Run the command again to sign in.");
-      process.exit();
-    });
-  } else if (argv._.length === 1) {
-    gitDiff(argv._[0])
-    .then(left => {
+    } else if (!fs.existsSync(argv._[0])) {
+      console.error('File(s) not found. Please check your file paths.');
+    } else if (fs.existsSync(argv._[0]) && fs.existsSync(argv._[1])) {
       transmit({
-        left,
-        'right': fs.readFileSync(argv._[0], 'utf-8')
+        left: fs.readFileSync(argv._[0], 'utf-8'),
+        right: fs.readFileSync(argv._[1], 'utf-8')
       });
-    });
-  } else {
-    transmit({
-      left: fs.readFileSync(argv._[0], 'utf-8'),
-      right: fs.readFileSync(argv._[0], 'utf-8')
-    });
-  }
-})
-.catch(error => {
-  console.error(error);
-});
+    } else {
+      console.error((fs.existsSync(argv._[0]) && fs.existsSync(argv._[1])) ? 'Something went wrong with your command.' : 'File(s) not found. Please check your file paths.');
+    }
+  })
+  .catch(error => {
+    console.error(error);
+  });
+}
