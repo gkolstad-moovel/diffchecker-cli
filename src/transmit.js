@@ -21,7 +21,7 @@ export default function transmit ({ left, right }) {
         process.exit(1);
       }
 
-      const url = 'https://diffchecker.com/' + response.body.slug;
+      const url = 'https://www.diffchecker.com/' + response.body.slug;
 
       ga.trackEvent({
         category: 'diff',
@@ -29,7 +29,9 @@ export default function transmit ({ left, right }) {
         label: 'cli'
       }, function diffCreateError () {
         console.log('Your diff is ready: ' + url);
-        opener(url);
+        opener(url, () => {
+          process.exit();
+        });
       });
     });
 }

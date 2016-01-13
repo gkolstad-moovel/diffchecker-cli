@@ -31,7 +31,7 @@ export default function authorization () {
           .post(process.env.API_URL + '/sessions')
           .send(result)
           .end((er, response) => {
-            if (er) return reject(new Error(response.body.error.code));
+            if (er) return reject(response.body.error.code);
 
             const conf = { authToken: response.body.authToken };
 
