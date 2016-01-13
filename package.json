@@ -17,6 +17,7 @@
   },
   "scripts": {
     "compile": "mkdir -p dist && API_URL=https://diffchecker-api-production.herokuapp.com GA_ID=UA-8857839-4 GA_DOMAIN=http://www.diffchecker.com babel --plugins transform-inline-environment-variables src --out-dir dist",
+    "compile_windows": "del dist&&mkdir dist&&set API_URL=https://diffchecker-api-production.herokuapp.com&&set GA_ID=UA-8857839-4&&set GA_DOMAIN=http://www.diffchecker.com&&babel --plugins transform-inline-environment-variables src --out-dir dist",
     "prepublish": "npm run compile",
     "test": "npm run compile && node dist/diffchecker.js test/file1.js test/file2.js"
   },
