@@ -45,7 +45,7 @@ if (argv.h || argv.help) {
         console.log("You've been signed out. Run the command again to sign in.");
         process.exit();
       });
-    } else if (argv._.length === 1) {
+    } else if (argv._.length === 1 && fs.existsSync(argv._[0])) {
       gitDiff(argv._[0])
       .then(left => {
         transmit({
@@ -56,11 +56,15 @@ if (argv.h || argv.help) {
       .catch(error => {
         console.log(error);
       });
-    } else {
+    } else if (!fs.existsSync(argv._[0])) {
+      console.error('File(s) not found. Please check your file paths.');
+    } else if (fs.existsSync(argv._[0]) && fs.existsSync(argv._[1])) {
       transmit({
         left: fs.readFileSync(argv._[0], 'utf-8'),
-        right: fs.readFileSync(argv._[0], 'utf-8')
+        right: fs.readFileSync(argv._[1], 'utf-8')
       });
+    } else {
+      console.error((fs.existsSync(argv._[0]) && fs.existsSync(argv._[1])) ? 'Something went wrong with your command.' : 'File(s) not found. Please check your file paths.');
     }
   })
   .catch(error => {
