@@ -8,7 +8,7 @@
   "engines": {
     "node": ">=0.12.7"
   },
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Command line tool for Diffchecker.",
   "main": "dist/diffchecker.js",
   "repository": {
