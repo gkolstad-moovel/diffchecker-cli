@@ -38,7 +38,7 @@
     }
   ],
   "license": "MIT",
-  "devDependencies" : {
+  "devDependencies": {
     "babel": "^6.3.26",
     "babel-cli": "^6.4.0",
     "babel-core": "^6.3.26",
@@ -49,6 +49,7 @@
     "eslint-plugin-react": "^3.13.1"
   },
   "dependencies": {
+    "charset-detector": "0.0.2",
     "ga": "0.0.2",
     "git-fs": "0.0.11",
     "opener": "^1.4.1",

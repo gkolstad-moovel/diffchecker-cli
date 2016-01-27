@@ -7,6 +7,7 @@ import path from 'path';
 import authorization from './auth';
 import gitDiff from './gitdiff';
 import transmit from './transmit';
+import getFile from './getFile';
 import { configPath } from './config';
 
 if (argv.h || argv.help) {
@@ -51,7 +52,7 @@ if (argv.h || argv.help) {
       .then(left => {
         transmit({
           left,
-          'right': fs.readFileSync(argv._[0], 'utf-8')
+          'right': getFile(argv._[0])
         });
       })
       .catch(error => {
@@ -61,8 +62,8 @@ if (argv.h || argv.help) {
       console.error('File(s) not found. Please check your file paths.');
     } else if (fs.existsSync(argv._[0]) && fs.existsSync(argv._[1])) {
       transmit({
-        left: fs.readFileSync(argv._[0], 'utf-8'),
-        right: fs.readFileSync(argv._[1], 'utf-8')
+        left: getFile(argv._[0]),
+        right: getFile(argv._[1])
       });
     } else {
       console.error((fs.existsSync(argv._[0]) && fs.existsSync(argv._[1])) ? 'Something went wrong with your command.' : 'File(s) not found. Please check your file paths.');
