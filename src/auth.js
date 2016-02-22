@@ -1,6 +1,7 @@
 import request from 'superagent';
 import fs from 'fs';
 import prompt from 'prompt';
+import { Promise } from 'es6-promise';
 
 import { config, configPath } from './config';
 import ga from './ga';

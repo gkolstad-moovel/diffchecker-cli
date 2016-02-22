@@ -49,6 +49,7 @@
     "eslint-plugin-react": "^3.13.1"
   },
   "dependencies": {
+    "es6-promise": "^3.1.2",
     "ga": "0.0.2",
     "git-fs": "0.0.11",
     "opener": "^1.4.1",
