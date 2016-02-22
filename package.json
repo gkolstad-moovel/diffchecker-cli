@@ -38,7 +38,7 @@
     }
   ],
   "license": "MIT",
-  "devDependencies" : {
+  "devDependencies": {
     "babel": "^6.3.26",
     "babel-cli": "^6.4.0",
     "babel-core": "^6.3.26",
@@ -51,6 +51,7 @@
   "dependencies": {
     "ga": "0.0.2",
     "git-fs": "0.0.11",
+    "highlight.js": "^9.1.0",
     "opener": "^1.4.1",
     "prompt": "^0.2.14",
     "superagent": "^1.6.1",
