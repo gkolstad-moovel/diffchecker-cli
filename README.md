@@ -8,6 +8,8 @@ Why use this instead of a native app? Because your diffs are instantly uploaded 
 
 First, make sure you have Node with npm installed from [nodejs.org](https://nodejs.org)
 
+Then:
+
 `npm install -g diffchecker`
 
 ## Usage
@@ -24,7 +26,7 @@ Both methods will open the diff in your default browser.
 
 By default, the diff will expire in 1 hour. You can change it to 1 day, 1 month or forever like this:
 
-`diffchecker --expire day file1.js file2.js`
+`diffchecker --expires day file1.js file2.js`
 
 Should you want to sign out:
 
