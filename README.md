@@ -1,5 +1,7 @@
 ## Diffchecker for the Terminal
 
+![Dependecy check](https://david-dm.org/wali-s/diffchecker-cli.svg)
+
 Now you can create cloud-hosted diffs right from the command line. Easily compare 2 files, or compare a current file with the version of itself from the most recent commit.
 
 Why use this instead of a native app? Because your diffs are instantly uploaded so you can share them with others.
